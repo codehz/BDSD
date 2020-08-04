@@ -1,0 +1,137 @@
+<html window-frame="extended" theme="dark">
+<head>
+<style>
+@import url(common/frame.css);
+@import url(common/font.css);
+@import url(common/folder-tree.css);
+@import url(common/controls.css);
+html {
+  min-width: 600dip;
+  min-height: 300dip;
+  width: 400dip;
+  height: 300dip;
+}
+body {
+  size: *;
+  flow: vertical;
+  padding: 0;
+  margin: 0;
+}
+widget#tree {
+  padding: 8dip !important;
+  height: * !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: white !important;
+  border: none !important;
+}
+
+widget|file-list { style-set: ext-file-list; }
+
+@set ext-file-list {
+  :root {
+    size: *;
+    background: rgba(0, 0, 0, 0.1);
+    flow: horizontal-flow;
+    padding: 8dip;
+    padding-left: 0;
+    border-spacing: 8dip;
+    color: white;
+    overflow-y: scroll-indicator;
+  }
+
+  .file {
+    position: relative;
+    size: 160dip;
+    behavior: file-icon;
+    -icon-size:"x-large";
+    foreground-repeat: no-repeat;
+    foreground-position: 50% 24dip;
+  }
+
+  .file:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: *;
+    padding: 8dip;
+    text-align: center;
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: break-spaces;
+    overflow-y: hidden;
+    height: 4em;
+    text-overflow: ellipsis;
+  }
+}
+frameset {
+  background: none;
+  size: *;
+}
+splitter {
+  width: 8dip;
+  background: rgba(0, 0, 0, 0.1);
+}
+.area {
+  width: *;
+  height: max-intrinsic;
+  flow: horizontal;
+  border-spacing: 8dip;
+  padding: 20dip;
+}
+
+.area > button:first-child {
+  margin-left: *;
+}
+
+.area > button {
+  margin-top:*;
+  margin-bottom:*;
+}
+</style>
+<script type="text/tiscript">
+function self.ready() {
+  $(widget#tree).show();
+  view.context.show();
+}
+event item-activate $(widget#tree) (evt) {
+  const path = evt.data;
+  const files = [];
+  System.scanFiles(path + "/*.*", |name, flags {
+    if(name == "." || name == "..") return true;
+    if(flags & (System.IS_HIDDEN | System.IS_SYSTEM | System.IS_DIR)) return true;
+    files.push(name);
+    return true;
+  });
+  files.sort(:a,b: a.lexicalCompare(b));
+  $(#list).content(files.map(|name| <div.file filename={path + "/" + name}><text>{name}</text></div>));
+}
+event click $(#list > .file) (evt) {
+  evt.target.state.checked = true;
+}
+</script>
+</head>
+<header>
+  <window-caption role="window-caption">File Explorer</window-caption>
+  <window-buttons>
+    <window-button role="window-minimize"></window-button>
+    <window-button role="window-maximize"></window-button>
+    <window-button role="window-close"></window-button>
+  </window-buttons>
+</header>
+<body>
+<frameset cols="200dip,*">
+  <widget|folder-tree folder-only #tree />
+  <splitter />
+  <widget|file-list #list />
+</frameset>
+<div.area>
+<button #select>select</button>
+<button #cancel>cancel</button>
+</div>
+</body>
+</html>

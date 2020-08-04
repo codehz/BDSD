@@ -1,0 +1,80 @@
+export class VirtualTree : Element {
+  // overridables:
+  // notifications:
+  function optionExpanded(option) {}
+  function optionCollapsed(option) {}
+  function selectionChanged() {}
+
+  // workers, must be implemented:
+  // toCall = function(caption, path, isFolder);
+  function eachChild(ofPath,toCall) { assert false: "must be implemented"; }
+  // toCall = function(caption, path, isFolder);
+  function eachRoot(toCall) { assert false: "must be implemented"; }
+
+  // implementation:
+  function appendOption(parentOpt, caption, path, nodeState) {
+    const el = Element.create(<option filename={path} value={path}><text>{caption}</text></option>)
+    parentOpt.append(el);
+    if (nodeState === true) el.state.expanded = true;
+    else if (nodeState === false) el.state.collapsed = true;
+    el.sendMouseEvent {
+      type: Event.MOUSE_MOVE,
+      x: 0,
+      y: 0,
+    };
+    return el;
+  }
+
+  function expandOption(opt) {
+    function appendChild(caption, path, isFolder) { (this super).appendOption(opt, caption, path, isFolder? false: undefined); }
+    this.eachChild(opt.attributes["filename"], appendChild);
+    opt.state.expanded = true;
+  }
+
+  function collapseOption(opt) {
+    while(opt.length > 1)
+      opt.last.remove();
+    opt.state.collapsed = true;
+    opt.state.current = true;
+    opt.state.checked = true;
+    this.postEvent("item-activate", opt.attributes["filename"]);
+  }
+
+  event expand(evt) {
+    this.expandOption(evt.target);
+    this.optionExpanded(evt.target);
+    return true;
+  }
+  event collapse(evt) {
+    this.collapseOption(evt.target);
+    this.optionCollapsed(evt.target);
+    return true;
+  }
+
+  event change() {
+    this.postEvent("item-activate", this.value);
+    return true;
+  }
+
+  event dblclick $(option:not(:node)) (evt,option) {
+    this.postEvent("item-activate", option.attributes["filename"]);
+  }
+  event keydown $(option:not(:node)) (evt,option) {
+    if(evt.keyCode == Event.VK_ENTER) this.postEvent("item-activate", option.attributes["filename"]);
+  }
+
+  function appendRoot(caption, path, isFolder) {
+    var rn = this.appendOption(this, caption, path, isFolder? true: undefined);
+    if(isFolder)
+      this.expandOption(rn);
+  }
+
+  function show(path = "") {
+    this.clear();
+    function rootAppender(caption, path, isFolder) { (this super).appendRoot(caption, path, isFolder); }
+    if(path)
+      this.eachChild(path,rootAppender);
+    else
+      this.eachRoot(rootAppender);
+  }
+}

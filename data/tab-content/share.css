@@ -1,0 +1,48 @@
+@import url(../common/controls.css);
+
+:root {
+  background: none;
+  color: black;
+}
+
+toolbar {
+  display: block;
+  flow: horizontal;
+  width: *;
+  height: 32dip;
+  padding: 0 16dip;
+  border-spacing: 16dip;
+  background: morph(color(accent-color), opacity: 28%);
+}
+toolbar > .pad {
+  size: *;
+}
+toolbar > #stat {
+  font-size: 12dip;
+  margin: * 0;
+}
+vlist {
+  display: block;
+  padding: 16dip 0;
+  padding-top: 0;
+  size: *;
+  overflow-x: hidden;
+  overflow-y: scroll-indicator;
+}
+#error-output:empty {
+  display: none;
+}
+#error-output:not(:empty) {
+  display: block;
+  size: *;
+  padding: 32dip 16dip;
+  // font-size: 20dip;
+  vertical-align: middle;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  overflow: hidden;
+}
+#error-output:not(:empty) + vlist {
+  display: none;
+}

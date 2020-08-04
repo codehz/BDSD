@@ -1,0 +1,32 @@
+<style>
+@import url(share.css);
+.line {
+  flow: horizontal;
+  width: *;
+}
+.line > input {
+  width: *;
+}
+img {
+  display: block;
+  width: 64dip;
+  margin: 0 *;
+  height: *;
+}
+p {
+  padding: 0;
+  margin: 0;
+}
+</style>
+<div.line#save model="MainData">
+  <button.icon style="foreground-image: url(../icons/file-explorer.svg)">save</button>
+  <input|text(save) placeholder="click to select file" disabled />
+</div>
+<p>Now click next to build project database</p>
+<img src="../icons/save.svg" />
+<div.bottom model="MainData">
+  <div.pad />
+  <button|link href="import.html">Prev</button>
+  <button|link href="process.html" @enabled="exported">Build Database</button>
+  <button #cancel>Cancel</button>
+</div>

@@ -1,0 +1,31 @@
+widget[type="folder-tree"] { style-set: std-folder-tree; }
+
+@set std-folder-tree < std-tree {
+  :root {
+    prototype: FolderTree url(folder-tree.tis);
+    border-spacing: 4dip;
+    overflow: scroll-indicator;
+  }
+
+  option {
+    border-spacing: 4dip;
+  }
+
+  option:not(:node) {
+    padding: 0;
+  }
+
+  option > text {
+    behavior: file-icon;
+    line-height: 18dip;
+    padding: 1dip 3dip 1dip 20dip;
+    foreground-repeat: no-repeat;
+    foreground-position: 0 50%;
+    min-width: 4em;
+  }
+
+  option > text:rtl {
+    padding: 1dip 20dip 1dip 3dip;
+    foreground-position: 100% 50%;
+  }
+}

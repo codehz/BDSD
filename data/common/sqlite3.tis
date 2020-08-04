@@ -1,0 +1,92 @@
+function SQLite.isRecordset(rs) {
+  return rs && (rs instanceof Asset) && (Asset.typeOf(rs) == #Recordset);
+}
+
+function SQLite.isDatabase(db) {
+  return db && (db instanceof Asset) && (Asset.typeOf(db) == #DB);
+}
+
+function SQLite.tablesIn(db) {
+  assert SQLite.isDatabase(db);
+  var rs = db.exec("SELECT name,sql FROM sqlite_master WHERE type='table' ORDER BY name;" );
+  var names = {};
+  if (SQLite.isRecordset(rs))
+    do names[rs["name"]] = rs["sql"] while( rs.next() );
+  return names;
+}
+// returns map of indexes found in the DB
+function SQLite.indexesIn(db) {
+  assert SQLite.isDatabase(db);
+  var rs = db.exec("SELECT name,sql FROM sqlite_master WHERE type='index' ORDER BY name;" );
+  var names = {};
+  if (SQLite.isRecordset(rs))
+    do names[rs["name"]] = rs["sql"] while( rs.next() );
+  return names;
+}
+
+// fills the table DOM element by data from the Recordset:
+
+function SQLite.tableFrom(rs) {
+  var headers = [];
+  for (var n in rs.length) {
+    const title = String.printf("%s:%s:%s", rs.name(n,#database), rs.name(n,#table), rs.name(n,#field));
+    headers.push(<th title={title}>{rs.name(n)}</th>);
+  }
+
+  var rows = [];
+
+  function cells() {
+    var list = [];
+    for (var v in rs)
+      list.push(<td>{v}</td>);
+    return list;
+  }
+
+  do { rows.push(<tr>{cells()}</tr>); } while(rs.next());
+
+  return <table>
+    <thead><tr>{headers}</tr></thead>
+    <tbody>{rows}</tbody>
+  </table>;
+}
+
+// Returns object constructed from current row as { field1: value1, field2: value2, etc. }
+// Not too much effective but someone may need it
+function SQLite.rowAsObject(rs) {
+  var names = [];
+  for (var n in rs.length)
+    names.push(rs.name(n));
+  var obj = {};
+  var n = 0;
+  for (var v in rs)
+    obj[names[n++]] = v;
+  return obj;
+}
+
+function SQLite.rowsAsArray(rs) {
+  var data = [];
+  do {
+    var row = [];
+    for (var v in rs) row.push(v);
+    data.push(row);
+  } while( rs.next() );
+  return data;
+}
+
+function SQLite.rowsAsObjectArray(rs) {
+  var names = [];
+  for (var n in rs.length)
+    names.push(rs.name(n));
+  var list = [];
+  do {
+    var row = {};
+    var n = 0;
+    for (var v in rs) row[names[n++]] = v;
+    list.push(row);
+  } while (rs.next());
+  return list;
+}
+
+function @asyncSql(func, db, sql, params...) {
+  db.execCallback(sql, params, func)
+}

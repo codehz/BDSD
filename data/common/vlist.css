@@ -1,0 +1,9 @@
+vlist {
+  display: block;
+  overflow: scroll-indicator;
+  prototype: VList url(vlist.tis);
+}
+
+vlist > li {
+  display:block;
+}

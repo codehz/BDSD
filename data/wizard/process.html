@@ -1,0 +1,40 @@
+<style>
+@import url(share.css);
+output {
+  display: block;
+  width: 64dip;
+  height: *;
+  width: *;
+  overflow-y: scroll-indicator;
+  white-space: pre-wrap;
+  font-size: 12dip;
+}
+output::marker {
+  size: *;
+  opacity: 0.2;
+  background: url(../icons/microscope.svg);
+  background-size: 64dip;
+  background-position: 50% 50%;
+}
+</style>
+<script type="text/tiscript">
+MainData.proc = System.Process.exec(bedrock.symutils, ["build-database", MainData.save, MainData.pdb, MainData.elf]);
+const outp = $(output);
+outp.value = "";
+MainData.proc << event stderr (text) {
+  outp.value += text;
+  outp.update();
+  if (outp.box(#height, #content) > outp.box(#height, #inner))
+    outp.scrollTo(0, outp.box(#height, #content) - outp.box(#height, #inner), true);
+}
+MainData.proc << event terminate (code) {
+  if (code == 0) MainData.processDone = true;
+  MainData.proc = null;
+}
+</script>
+<output />
+<div.bottom model="MainData">
+  <div.pad />
+  <button #done @enabled="processDone">Done</button>
+  <button #cancel>Cancel</button>
+</div>

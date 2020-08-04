@@ -1,0 +1,8 @@
+@import url(../fonts/load.css);
+
+html {
+  font-family: 'Victor Mono';
+  font-rendering-mode: sub-pixel;
+  font-size: 14dip;
+  color: black;
+}

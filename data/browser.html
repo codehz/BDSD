@@ -1,0 +1,225 @@
+<html window-icon="icons/search-property.png" window-frame="extended" theme="dark" window-resizable="true">
+<head>
+<style>
+@import url(common/frame.css);
+@import url(common/font.css);
+@import url(common/controls.css);
+@import url(common/plus.css);
+
+html {
+  padding: 0;
+  min-width: 750dip;
+  min-height: 500dip;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+div.pad {
+  size: *;
+}
+
+#head {
+  background: morph(color(accent-color), opacity: 10%);
+  // background: rgba(200, 200, 200, 0.6);
+  height: 96dip;
+}
+
+#title {
+  display: block;
+  font-size: 20dip;
+  line-height: 48dip;
+  font-weight: 900;
+  padding-left: 16dip;
+}
+
+#search {
+  position: absolute;
+  top: 16dip;
+  left: 200dip;
+  right: 200dip;
+}
+
+#tabs {
+  behavior: clickable;
+  flow: horizontal;
+  padding-top: *;
+  width: max-content;
+  max-width: 100%;
+  height: *;
+  overflow-x: scroll-indicator;
+}
+
+#tabs > .tab {
+  flow: horizontal;
+  vertical-align: middle;
+  behavior: clickable;
+  background: morph(color(accent-color), opacity: 0%);
+  padding-left: 16dip;
+  white-space: nowrap;
+  height: 32dip;
+  transition: background-color linear 200ms;
+}
+
+#tabs > .tab:checked {
+  background: morph(color(accent-color), opacity: 20%);
+}
+
+#tabs > .tab > .close {
+  behavior: clickable;
+  height: *;
+  width: 16dip;
+}
+#tabs > .tab > .close:not(:disabled) {
+  width: 32dip;
+  stroke: black;
+  stroke-width: 1dip;
+  foreground-repeat: no-repeat;
+  foreground-position: 50% 50%;
+  foreground-size: 10dip;
+  foreground-image: url(path: M0 0 L10 10 M10 0 L0 10);
+  cursor: pointer;
+}
+#content {
+  var(translate): 0%;
+  size: *;
+  overflow: hidden;
+  flow: horizontal;
+}
+
+#content > frame {
+  transform: translate(var(translate, 0%), 0);
+  width: 100%;
+  height: *;
+  overflow: hidden;
+}
+</style>
+<title>Bedrock Dedicated Server Dumper</title>
+<script type="text/tiscript">
+include "common/lib.tis";
+include "common/plus.tis";
+import { @animate } from "common/animate.tis";
+
+function @observe(func, obj) {
+  Object.addObserver(obj, func);
+}
+
+var db = null;
+var search_stmt = null;
+
+const ctt = self.$(#content);
+ctt[0].load(self.url("tab-content/home.html"));
+
+const ctta = @animate ctt 0pr 0.15 0.1pr : translate : this.style.variable("translate", translate);
+
+namespace DataModel {
+
+var search = "";
+var result = [];
+var tabs = [{
+  title: "Home Page",
+  persistent: true,
+  content: self.url("tab-content/home.html"),
+  data: null
+}];
+var selected = 0;
+
+@observe tabs | change {
+  const type = change[0];
+  const start = change[2];
+  const end = change[3];
+  if (type == #add-range) {
+    for (var idx = start; idx < end; idx++) {
+      const el = Element.create(<frame />);
+      ctt.insert(el, idx);
+      el.data = tabs[idx].data;
+      el.load(tabs[idx].content);
+    }
+  } else {
+    for (var idx = start; idx < end; idx++)
+      ctt[start].remove();
+  }
+};
+
+@observing "selected" | {
+  ctta.to(selected * -100pr);
+  $(#tabs)[selected].scrollToView();
+}
+
+function activeTab(idx) {
+  selected = idx;
+}
+
+function closeTab(idx) {
+  const next = selected >= idx ? selected - 1 : selected;
+  tabs.splice(idx, 1);
+  self.post(::selected = next);
+}
+
+function addTab(obj) {
+  tabs.push(obj);
+  selected = tabs.length - 1;
+}
+
+function startSearch() {
+  if (search.length == 0) return;
+  addTab {
+    title: String.$(Search {search}),
+    persistent: false,
+    content: self.url("tab-content/search.html"),
+    data: search
+  };
+}
+
+}
+
+function self.ready() {
+  const DEFAULT_WIDTH = 800dip;
+  const DEFAULT_HEIGHT = 600dip;
+  var (x, y, w, h) = view.screenBox(#workarea, #rectw);
+  var sw = self.toPixels(DEFAULT_WIDTH, #width);
+  var sh = self.toPixels(DEFAULT_HEIGHT, #height);
+  var tx = x + (w - sw) / 2;
+  var ty = y + (h - sh) / 2;
+  view.move(tx, ty, sw, sh, true);
+  view.context.show();
+
+  try {
+    db = SQLite.open(view.context.value.file);
+  } catch (e) {
+    view.msgbox(#error, "Failed to open database");
+    view.close();
+  }
+}
+
+function self.closing() {
+  view.context.value.done();
+}
+</script>
+</head>
+<header .overlay>
+  <window-buttons>
+    <window-button role="window-minimize" />
+    <window-button role="window-maximize" />
+    <window-button role="window-close" />
+  </window-buttons>
+</header>
+<body model="DataModel">
+  <div #head role="window-caption">
+    <span #title>BDS Dumper</span>
+    <input #search placeholder="search" enter="startSearch()" (search) />
+    <div #tabs>
+      <div.tab repeat="idx,tab in tabs" @checked="idx == selected" click="activeTab(idx)">
+        <span (tab.title)></span>
+        <div.close @disabled="tab.persistent" click="closeTab(idx)" />
+      </div>
+    </div>
+  </div>
+  <div #content>
+    <frame />
+  </div>
+</body>
+</html>

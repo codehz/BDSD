@@ -1,0 +1,84 @@
+<html window-icon="icons/import.png" window-frame="extended" theme="dark" window-resizable="false">
+<head>
+<style>
+@import url(common/frame.css);
+@import url(common/font.css);
+@import url(common/controls.css);
+@import url(common/plus.css);
+
+frame {
+  height: *;
+  transition: blend linear 200ms;
+}
+
+</style>
+<script type="text/tiscript">
+include "common/lib.tis";
+include "common/plus.tis";
+
+function self.ready() {
+  const DEFAULT_WIDTH = 500dip;
+  const DEFAULT_HEIGHT = 320dip;
+  var (x, y, w, h) = view.screenBox(#workarea, #rectw);
+  var sw = self.toPixels(DEFAULT_WIDTH, #width);
+  var sh = self.toPixels(DEFAULT_HEIGHT, #height);
+  var tx = x + (w - sw) / 2;
+  var ty = y + (h - sh) / 2;
+  view.move(tx, ty, sw, sh, true);
+  view.context.show();
+}
+
+namespace MainData {
+
+var elf = undefined;
+var pdb = undefined;
+var save = undefined;
+var imported = false;
+var exported = false;
+var processDone = false;
+var proc = undefined;
+
+@observing "elf" :: imported = elf && pdb;
+@observing "pdb" :: imported = elf && pdb;
+@observing "save" :: exported = !!save;
+
+}
+
+function self.closing() {
+  if (MainData.proc)
+    MainData.proc.terminate();
+  view.context.value();
+}
+
+event click $(#cancel) {
+  view.close();
+}
+
+event click $(#done) {
+  view.close();
+}
+
+event click $(#elf) {
+  MainData.elf = winext.openFile("ELF File|bedrock_server|All files(*.*)|*.*", "Linux bedrock_server", view.root);
+}
+
+event click $(#pdb) {
+  MainData.pdb = winext.openFile("PDB File|bedrock_server.pdb|All files(*.*)|*.*", "Windows bedrock_server (PDB)", view.root);
+}
+
+event click $(#save) {
+  MainData.save = winext.saveFile("Project File(*.bds-dump)|*.bds-dump", "bds-dump", "Project file", view.root);
+}
+
+</script>
+<title>New project</title>
+</head>
+<header .shade>
+  <window-caption role="window-caption">New project</window-caption>
+  <window-buttons>
+    <window-button role="window-minimize" />
+    <window-button role="window-close" />
+  </window-buttons>
+</header>
+<frame src="wizard/index.html" />
+</html>

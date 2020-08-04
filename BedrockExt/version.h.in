@@ -1,0 +1,3 @@
+#pragma once
+
+#define BDSDVERSION L"@BDSD_NUMBER@.@BDSD_VERSION@.@BDSD_BUILD_NUMBER@"

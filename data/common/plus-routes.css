@@ -1,0 +1,9 @@
+@import url(plus.css);
+
+/*main - sandbox for views*/
+main {
+  aspect: "Plus.Application" url(plus-routes.tis);
+  size:*;
+  overflow:auto;
+}
+

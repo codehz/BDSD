@@ -1,0 +1,67 @@
+<html window-icon="icons/form.png" window-frame="extended" theme="dark" window-resizable="false">
+<head>
+<style>
+@import url(common/frame.css);
+@import url(common/font.css);
+@import url(common/controls.css);
+
+body {
+  flow: horizontal;
+  border-spacing: 36dip;
+  margin: 0;
+  padding: 36dip;
+}
+
+button.big {
+  width: *;
+}
+
+</style>
+<script type="text/tiscript">
+include "common/lib.tis";
+
+function self.ready() {
+  const DEFAULT_WIDTH = 420dip;
+  const DEFAULT_HEIGHT = 240dip;
+  var (x, y, w, h) = view.screenBox(#workarea, #rectw);
+  var sw = self.toPixels(DEFAULT_WIDTH, #width);
+  var sh = self.toPixels(DEFAULT_HEIGHT, #height);
+  var tx = x + (w - sw) / 2;
+  var ty = y + (h - sh) / 2;
+  view.move(tx, ty, sw, sh, true);
+  winext.blur(view.root);
+}
+
+event click $(#open) {
+  const file = winext.openFile("Project File(*.bds-dump)|*.bds-dump|All files(*.*)|*.*", "Linux bedrock_server", view.root);
+  if (!file) return;
+  winext.create(self.url("browser.html"), {
+    done: || view.windowState = View.WINDOW_SHOWN,
+    file: file,
+  });
+  view.windowState = View.WINDOW_HIDDEN;
+}
+
+event click $(#create) {
+  stdout.$n(in)
+  winext.create(self.url("wizard.html"), || view.windowState = View.WINDOW_SHOWN);
+  view.windowState = View.WINDOW_HIDDEN;
+}
+
+</script>
+<title>Bedrock Dedicated Server Dumper</title>
+</head>
+<header .shade>
+  <window-caption role="window-caption">Bedrock Dedicated Server Dumper</window-caption>
+  <window-buttons>
+    <window-button role="window-settings" title="Settings" />
+    <window-button role="window-minimize" />
+    <window-button role="window-close" />
+  </window-buttons>
+</header>
+<body>
+<button.big.big-icon #open style="foreground-image: url(icons/open-archive.svg); foreground-size: 64dip;">Open Project</button>
+<button.big.big-icon #create style="foreground-image: url(icons/create-document.svg);  foreground-size: 64dip;">New Project</button>
+</output>
+</body>
+</html>

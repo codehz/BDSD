@@ -1,0 +1,95 @@
+namespace UX {
+  namespace details {
+    function showMenu(parameters) {
+      winext.menu(view.root.url("menu.html"), parameters);
+    }
+
+    function createCommand(target, name, title) {
+      return <option title={title} disabled={target.queryCommand(name) == 0x02} action={|| target.execCommand(name)} />
+    }
+  }
+
+  function @contextmenu(func, target) {
+    target.on("contextmenu", func);
+  }
+
+  function input() {
+    @contextmenu (this) | {
+      this.state.busy = true;
+      var (cx, cy) = view.cursorLocation();
+      var (vx, vy) = view.box(#position, #client, #screen);
+      details.showMenu {
+        position: {
+          x: cx + vx,
+          y: cy + vy
+        },
+        list: [
+          details.createCommand(this, "edit:undo", "Undo"),
+          details.createCommand(this, "edit:copy", "Copy"),
+          details.createCommand(this, "edit:cut", "Cut"),
+          details.createCommand(this, "edit:paste", "Paste"),
+          details.createCommand(this, "edit:selectall", "Select All"),
+        ],
+        close: || this.state.busy = false
+      }
+    };
+  }
+
+  function button(obj) {
+    const color = obj.color;
+    var step = 0;
+    var state = 0;
+    var last = 0;
+    this.paintContent = | gfx {
+      const (x1, y1, x2, y2) = this.box(#rectw,#border,#self);
+      const base = this.toPixels(1.4dip);
+      if (this.state.disabled) return;
+      gfx.pushLayer(#background-area, [opacity: Float.morph(0.5, 0.1, step)]);
+      gfx.fillColor(color);
+      gfx.rectangle(x1, Float.morph(y1 + y2 - base, y1, step * step), x2 + 1, y2 + 1);
+      gfx.popLayer();
+    }
+    const update = | {
+      const now = System.ticks;
+      const changed = (now - last) / 150.0;
+      last = now;
+      step += state == 1 ? changed : -changed;
+      if (step <= 0) {
+        state = 0.;
+        step = 0.;
+        this.refresh();
+        return false;
+      } else if (step >= 1) {
+        state = 2;
+        step = 1.;
+        this.refresh();
+        return false;
+      }
+      this.refresh();
+      return true;
+    };
+
+    this << event mouseenter {
+      if (state == 0) {
+        last = System.ticks - 1;
+        state = 1;
+        this.animate(update);
+      } else if (state = 3) state = 1;
+    }
+    this << event mouseleave {
+      if (state == 2) {
+        last = System.ticks - 1;
+        state = 3;
+        this.animate(update);
+      } else if (state == 1) state = 3;
+    }
+  }
+
+  function link() {
+    this << event click {
+      const href = this.attributes["href"];
+      Sciter.launch(href);
+      return true;
+    }
+  }
+}

@@ -1,0 +1,24 @@
+
+/* principal handlers */
+[model] {aspect:"Plus.Model" url(plus.tis); }
+[model] [each], [model][each] { aspect:"Plus.EachRepeater"; } /* note repeater shall come first before [model] [name] for <select each="..." name="var"> */
+[model] [repeat] { aspect:"Plus.RepeatRepeater"; } /* note repeater shall come first before [model] [name] for <select each="..." name="var"> */
+[model] [name], [model][name] { aspect:"Plus.Terminal"; }
+[model] [class*='{{'], [model][class*='{{'] { aspect:"Plus.ClassTerminal"; }
+[model] [value*='{{'], [model][value*='{{'] { aspect:"Plus.valAttrTerminal"; }
+[model] [href*='{{'], [model][href*='{{'] { aspect:"Plus.hrefAttrTerminal"; }
+[model] [src*='{{'], [model][src*='{{'] { aspect:"Plus.srcAttrTerminal"; }
+
+/* any attribute with the name starting from '@' is considered as bound: */ 
+[model] *:has-bound-attributes { aspect:"Plus.boundAttributesTerminal"; }
+
+/* auxiliary event handlers */
+[model] [click] { aspect:"Plus.Click"; }
+[model] [dblclick] { aspect:"Plus.DblClick"; }
+[model] [change] { aspect:"Plus.Change"; }
+[model] [enter] { aspect:"Plus.Enter"; }
+[model] [escape] { aspect:"Plus.Escape"; }
+[model] [focusin] { aspect:"Plus.FocusIn"; }
+[model] [focusout] { aspect:"Plus.FocusOut"; }
+
+

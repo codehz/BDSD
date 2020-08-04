@@ -1,0 +1,189 @@
+<style>
+@import url(share.css);
+toolbar > action {
+  content: attr(name);
+  display: block;
+  padding: 2dip 4dip;
+  font-size: 12dip;
+  margin: * 0;
+}
+vlist > .item {
+  width: *;
+  height: 48dip;
+  padding: 4dip 16dip;
+  flow: vertical;
+  border-spacing: 2dip;
+  vertical-align: middle;
+}
+vlist > .item:hover {
+  background: morph(color(accent-color), opacity: 10%);
+}
+vlist > .item output {
+  display: block;
+}
+vlist > .item output[name="value"] {
+  font-weight: 600;
+}
+vlist > .item > .bottom {
+  flow: horizontal;
+  font-size: 12dip;
+  border-spacing: 4dip;
+}
+vlist > .item > .bottom output[data=""] {
+  display: none;
+}
+vlist > .item > .bottom > * {
+  padding: 2dip 4dip;
+}
+vlist > .item action:disabled {
+  display: none;
+}
+vlist > .item action {
+  content: attr(name);
+}
+vlist > .item action[name="fixme"] {
+  background: #d91e1e;
+  color: white;
+}
+vlist > .item .bottom output[data] {
+  content: attr(data);
+}
+vlist > .item .bottom output[name="type"][data="windows"] {
+  background: #329fda;
+}
+vlist > .item .bottom output[name="type"][data="linux"] {
+  background: #2ae17f;
+}
+vlist > .item .bottom output[name="type"][data="none"] {
+  background: #000;
+  color: #fff;
+}
+vlist > .item .bottom output[name="offset"] {
+  background: #803315;
+  color: white;
+}
+</style>
+<script type="text/tiscript">
+include "../common/lib.tis";
+include "../common/vlist.tis";
+
+const query = "SELECT " +
+  "(select S.key from symbols S where S.offset=vt.target) AS value, " +
+  "(select symprefix(S.key) from symbols S where S.offset=vt.target) AS prefix, " +
+  "vt.target AS offset " +
+  "FROM vtables AS vt " +
+  "WHERE vt.key = ? " +
+  "ORDER BY vt.idx";
+
+const getPdbSymbol = "SELECT key, raw, offset FROM fts_symbols(?) WHERE original = 1";
+
+const vlist = VirtualList {
+  container: $(vlist),
+  renderItemView: : index, record, itemElement {
+    const vlel = itemElement.$([name="value"]);
+    const vtyp = itemElement.$([name="type"]);
+    const voff = itemElement.$([name="offset"]);
+    const vfix = itemElement.$([name="fixme"]);
+    vlel.value = record.full || record.value || "(pure virtual)";
+    vtyp.@#data = record.full ? 'windows' : record.value ? 'linux' : 'none';
+    voff.@#data = record.offset || '';
+    vfix.state.disabled = !!record.full || record.prefix.match(/\$destructor$/);
+  }
+}
+
+function simplify(str) {
+  return str
+    .replace(
+      "class std::basic_string<char, struct std::char_traits<char>, class std::allocator<char>>",
+      "std::string")
+    .replace(
+      /class std::vector<(.*), class std::allocator<\1>>/g,
+      :a,x:String.$(std::vector<{x}>))
+    .replace(
+      /class std::unique_ptr<(.*), struct std::default_delete<\1>>/g,
+      :a,x:String.$(std::unique_ptr<{x}>));
+}
+
+function self.ready() {
+  const start = System.ticks;
+  @asyncSql db query self.parent.data.offset | rs, err {
+    try {
+      if (err) throw err;
+      if (SQLite.isRecordset(rs)) {
+        vlist.value = SQLite.rowsAsObjectArray(rs);
+        $(#error-output).text = "";
+        $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
+        for (var item in vlist.value) {
+          if (item.prefix && !item.prefix.match(/\$destructor$/)) {
+            const arg = String.$(^"{item.prefix}");
+            const citm = item;
+            @asyncSql db getPdbSymbol arg | rs, err {
+              if (SQLite.isRecordset(rs)) {
+                citm.full = rs[0];
+                bedrock.demangleVtableFunction(rs[1], :x:citm.decoded = x);
+                citm.raw = rs[1];
+                citm.offset = rs[2];
+              }
+              $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
+            };
+          }
+        }
+      } else {
+        if (rs[0] == 101) {
+          throw new Error("Empty result");
+        }
+        throw new Error(SQLite.errstr(rs[0]));
+      }
+    } catch (e) {
+      $(#error-output).text = e.toString();
+    }
+  };
+}
+
+event click $(action[name="export"]) {
+  var line = "";
+  var destructor = false;
+  var skipped_decoded = 0;
+  var skipped_nopdb = 0;
+  var skipped_pure = 0;
+  for (var item in vlist.value) {
+    if (item.prefix.match(/\$destructor$/)) {
+      if (!destructor) { // skip the seconds destructor
+        line += String.$(virtual ~{self.parent.data.name}();) + "\n";
+        destructor = true;
+      }
+    } else if (item.decoded) {
+      line += item.decoded + ";\n";
+    } else if (item.full) { // so exception when set decoded
+      const gen_name = String.$(virtual void __failed_to_decoded_{skipped_decoded++}(););
+      line += "// " + item.value + "\n";
+      line += gen_name + "\n";
+    } else if (item.value) {
+      const gen_name = String.$(virtual void __unknown_{skipped_nopdb++}(););
+      line += "// " + item.value + "\n";
+      line += gen_name + "\n";
+    } else {
+      const gen_name = String.$(virtual void __pure_{skipped_pure++}(););
+      line += gen_name + "\n";
+    }
+  }
+  view.clipboard(#put, line);
+}
+
+</script>
+<toolbar>
+  <action(export) />
+  <div.pad />
+  <div#stat />
+</toolbar>
+<output|text #error-output />
+<vlist>
+  <div.item>
+    <output(value) />
+    <div.bottom>
+      <output(type) />
+      <output(offset) />
+      <action(fixme) />
+    </div>
+  </div>
+</vlist>

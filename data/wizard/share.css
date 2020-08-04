@@ -1,0 +1,19 @@
+@import url(../common/font.css);
+@import url(../common/controls.css);
+@import url(../common/plus.css);
+
+:root {
+  background: none;
+  padding: 16dip;
+  flow: horizontal;
+  border-spacing: 16dip;
+}
+
+.pad {
+  size: *;
+}
+
+.bottom {
+  flow: horizontal;
+  border-spacing: 8dip;
+}

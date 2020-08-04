@@ -1,0 +1,89 @@
+<html window-frame="extended" window-resizable="false">
+<head>
+<style>
+@import url(common/font.css);
+@import url(common/base.css);
+
+html {
+  background: transparent;
+  border: 1.2dip solid color(accent-color);
+}
+body {
+  background: transparent;
+  margin: 0;
+  overflow: hidden;
+}
+div {
+  padding: 8dip 12dip;
+  font-size: 14dip;
+  color: color(accent-color);
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color cubic-out 200ms;
+}
+div:disabled {
+  color: morph(color(accent-color), opacity: 20%);
+}
+div:hover:not(:disabled) {
+  background-color: color(accent-color);
+  color: white;
+}
+
+</style>
+<script type="text/tiscript">
+
+const params = view.menu.value;
+
+function min(a, b) {
+  return a < b ? a : b;
+}
+
+var flag = 1;
+
+function self.ready() {
+  const body = $(body);
+  for (var item in params.list) {
+    if (item.tag == #option) {
+      const el = new Element(#div);
+      el.text = item[0].title;
+      body.append(el);
+      const disabled = item[0].disabled;
+      if (disabled) {
+        el.state.disabled = true;
+        continue;
+      }
+      const fn = item[0].action;
+      if (fn)
+        el << event click {
+          fn();
+        };
+    }
+  }
+  view.update();
+  const cx = params.position.x;
+  const cy = params.position.y;
+  var (x1,y1,x2,y2) = view.screenBox(#workarea, #rect);
+  var vw = $(body).intrinsicWidthMax() + 4;
+  var vh = $(body).intrinsicHeight(vw) + 4;
+  var mx = x2 - vw;
+  var my = y2 - vh;
+  view.move(min(cx, mx), min(cy, my), vw, vh, true);
+  view.windowTopmost = true;
+  view.menu.show();
+}
+event click {
+  view.close();
+}
+
+view << event close {
+  params.close();
+}
+
+view.on("activate", (state) => {
+  if (!state) view.close();
+});
+
+</script>
+</head>
+<body>
+</body>
+</html>

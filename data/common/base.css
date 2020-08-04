@@ -1,0 +1,8 @@
+html {
+  var(real-accent-color): rgb(0, 120, 210);
+  var(accent-color): rgb(0, 0, 0);
+  var(back-color): rgb(128, 128, 128);
+}
+html:owns-focus {
+  var(accent-color): color(real-accent-color);
+}

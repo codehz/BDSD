@@ -1,0 +1,98 @@
+button {
+  aspect: UX.button(color: color(accent-color)) url(controls.tis);
+  display: block;
+  height: 32dip;
+  color: black;
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  border-radius: none;
+  border-width: 0;
+  background: morph(color(accent-color), opacity: 10%);
+  padding: * 16dip;
+}
+
+button[type="link"] {
+  behavior: hyperlink;
+}
+
+button.big-icon {
+  foreground-position: 50%;
+  foreground-repeat: no-repeat;
+  padding-bottom: 0;
+}
+
+button.icon {
+  foreground-position: 8dip 50%;
+  foreground-repeat: no-repeat;
+  foreground-size: 24dip;
+  padding-left: 40dip;
+}
+
+button>text {
+  padding: 0;
+}
+
+button:active {
+  background: morph(color(accent-color), opacity: 20%);
+}
+
+button:disabled {
+  background: morph(color(accent-color), opacity: 5%);
+}
+
+input {
+  display: inline-block;
+  height: 32dip;
+  background: none;
+  padding: * 8dip;
+  overflow-x: scroll-indicator;
+  border-radius: 0;
+  box-shadow: inset 0 -2.4dip 0 morph(color(accent-color), opacity: 50%);
+  border: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-selection-caret-color: black;
+  text-selection-background-color: black;
+  text-selection-color: white;
+  context-menu: unset;
+  aspect: UX.input url(controls.tis);
+}
+input:hover {
+  background: morph(color(accent-color), opacity: 10%);
+  box-shadow: inset 0 -2.4dip 0 morph(color(accent-color), opacity: 100%);
+}
+input:focus, input:busy {
+  background: morph(color(accent-color), opacity: 20%);
+  box-shadow: inset 0 -2.4dip 0 morph(color(accent-color), opacity: 100%);
+}
+input::marker {
+  content: attr(placeholder);
+  size: *;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.5;
+  transition: opacity linear 0.2s;
+}
+input:not(:empty)::marker {
+  opacity: 0;
+}
+popup[role=tooltip] {
+  background: rgba(240, 240, 240, 0.9);
+  border: 1px solid rgba(120, 120, 120, 1);
+  font-family: inherit;
+  color: black;
+  font-size: 16dip;
+}
+progress {
+  size: *;
+  border-radius: 0;
+  background: morph(color(accent-color), opacity: 10%);
+  border: none;
+  padding: 4dip;
+  foreground: rgba(0, 0, 0, 0.5);
+}
+a[target="browser"] {
+  aspect: UX.link url(controls.tis);
+}

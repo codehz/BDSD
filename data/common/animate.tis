@@ -1,0 +1,40 @@
+function abs(a) {
+  return a < (a * 0) ? -a : a;
+}
+
+export default class Animation {
+  this var state = false;
+
+  function this(element, applyFn, current, speed, epsilon) {
+    this.element = element;
+    this.applyFn = applyFn;
+    this.current = current;
+    this.target  = target;
+    this.speed   = speed;
+    this.epsilon = epsilon;
+  }
+
+  function to(target) {
+    this.target = target;
+    if (!this.state) {
+      this.state = true;
+      this.element.animate(||this.next());
+    }
+  }
+
+  function next() {
+    if (abs(this.current - this.target) >= this.epsilon) {
+      this.current = Length.morph(this.current, this.target, this.speed);
+      this.applyFn.call(this.element, this.current);
+    } else {
+      this.current = this.target;
+      this.applyFn.call(this.element, this.current);
+      this.state = false;
+    }
+    return this.state;
+  }
+}
+
+export function @animate(applyFn, element, current, speed, epsilon) {
+  return new Animation(element, applyFn, current, speed, epsilon)
+}

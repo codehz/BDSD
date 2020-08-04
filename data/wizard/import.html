@@ -1,0 +1,31 @@
+<style>
+@import url(share.css);
+.line {
+  flow: horizontal;
+  width: *;
+}
+.line > input {
+  width: *;
+}
+img {
+  display: block;
+  width: 64dip;
+  margin: 0 *;
+  height: *;
+}
+</style>
+<div.line#elf model="MainData">
+  <button.icon style="foreground-image: url(../icons/file-explorer.svg)">ELF</button>
+  <input|text(elf) placeholder="click to select file" disabled />
+</div>
+<div.line#pdb model="MainData">
+  <button.icon style="foreground-image: url(../icons/file-explorer.svg)">PDB</button>
+  <input|text(pdb) placeholder="click to select file" disabled />
+</div>
+<img src="../icons/import.svg" />
+<div.bottom model="MainData">
+  <div.pad />
+  <button|link href="index.html">Prev</button>
+  <button|link href="export.html" @enabled="imported">Next</button>
+  <button #cancel>Cancel</button>
+</div>

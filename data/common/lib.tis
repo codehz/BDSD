@@ -1,0 +1,9 @@
+try {
+  include library "BedrockExt";
+  include library "WindowExt";
+  include library "DatabaseExt";
+  include "sqlite3.tis";
+} catch (e) {
+  view.msgbox(#alert, String.$(Failed to load library, please re-install: {"\n"}{e}));
+  view.close();
+}

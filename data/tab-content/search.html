@@ -1,0 +1,278 @@
+<style>
+@import url(share.css);
+toolbar > group {
+  display: block;
+  border-spacing: 4dip;
+  flow: horizontal;
+  height: *;
+  vertical-align: middle;
+}
+toolbar > group > option {
+  aspect: InitOption;
+  content: attr(name);
+  padding: 2dip 4dip;
+  font-size: 12dip;
+}
+toolbar > group > option:not(:checked) {
+  background: none !important;
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+toolbar > group > option[name="rank"] {
+  background: #cd88af;
+}
+toolbar > group > option[name="text"] {
+  background: #bccd67;
+}
+toolbar > .fakeoption {
+  padding: 2dip 4dip;
+  font-size: 12dip;
+  background: #224c00;
+  color: white;
+  margin: * 0;
+}
+toolbar > .fakeoption:disabled {
+  background: none;
+  color: rgba(0, 0, 0, 0.5);
+}
+.search-result > .item {
+  // behavior: clickable;
+  padding: 4dip 16dip;
+  width: *;
+  height: 40dip;
+  flow: vertical;
+}
+.search-result > .item:hover {
+  background: morph(color(accent-color), opacity: 10%);
+}
+.search-result > .item:checked {
+  background: morph(color(accent-color), opacity: 20%);
+}
+.search-result > .item output {
+  display: block;
+}
+.search-result > .item [name="key"] {
+  font-weight: 600;
+  white-space: nowrap;
+  height: *;
+  max-width: 100%;
+  overflow-x: hidden-scroll;
+  behavior: htmlarea;
+  font-weight: 300;
+  cursor: text;
+}
+.search-result > .item [name="key"] > b {
+  font-weight: 900;
+  color: morph(color(accent-color), darken: 10%);
+}
+.search-result > .item .bottom {
+  flow: horizontal;
+  font-size: 12dip;
+  border-spacing: 4dip;
+}
+.search-result > .item .bottom output {
+  background: white;
+  padding: 2dip 4dip;
+}
+.search-result > .item .bottom output[data] {
+  content: attr(data);
+}
+toolbar > group > option[name="unknown"],
+.search-result > .item .bottom output[name="type"][data="unknown"] {
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+}
+toolbar > group > option[name="variable"],
+.search-result > .item .bottom output[name="type"][data="variable"] {
+  background: #8abd5f;
+}
+toolbar > group > option[name="function"],
+.search-result > .item .bottom output[name="type"][data="function"] {
+  background: #d4ba6a;
+}
+toolbar > group > option[name="special"],
+.search-result > .item .bottom output[name="type"][data="special"] {
+  background: #cd88af;
+}
+toolbar > group > option[name="local"],
+.search-result > .item .bottom output[name="type"][data="local"] {
+  background: #8f78ad;
+}
+toolbar > group > option[name="windows"],
+.search-result > .item .bottom output[name="original"][data="windows"] {
+  background: #329fda;
+}
+toolbar > group > option[name="linux"],
+.search-result > .item .bottom output[name="original"][data="linux"] {
+  background: #2ae17f;
+}
+.search-result > .item .bottom output[name="offset"] {
+  background: #803315;
+  color: white;
+}
+</style>
+<script type='text/tiscript'>
+include "../common/lib.tis";
+include "../common/vlist.tis";
+
+function InitOption() {
+  this << event click {
+    this.state.checked = !this.state.checked;
+    $(.fakeoption).state.disabled = false;
+  }
+}
+
+var query = "SELECT " +
+  "highlight(fts_symbols, 0, '{', '}') as key, " +
+  "raw, type, original, offset " +
+  "FROM fts_symbols(?)" +
+  "ORDER BY key";
+
+event click $(.fakeoption) {
+  $(.fakeoption).state.disabled = true;
+  const allopt = self.$$(toolbar :checked).map(:el:[el.@#name,el.value]);
+  var base = "SELECT highlight(fts_symbols, 0, '{', '}') as key, raw, type, original, offset " +
+    "FROM fts_symbols(?) WHERE ";
+  var x_type = "-1";
+  var x_original = "-1";
+  var o_rank = false;
+  var o_text = false;
+  for (var x in allopt) {
+    switch (x[0]) {
+      case "unknown":
+      case "function":
+      case "variable":
+      case "special":
+      case "local":
+        x_type += String.$(, {x[1]});
+        break;
+      case "windows":
+      case "linux":
+        x_original += String.$(, {x[1]});
+        break;
+      case "rank":
+        o_rank = true;
+        break;
+      default: debug alert(Unknown option {x[0]});
+    }
+  }
+  base += String.$(type in ({x_type}) AND original in ({x_original}) );
+  if (o_rank) base += "ORDER BY rank";
+  else base += "ORDER BY key";
+  query = base;
+  stdout.println(query);
+  reload();
+}
+
+function getSymbolType(v) {
+  switch (v) {
+    case 0: return "unknown";
+    case 1: return "variable";
+    case 2: return "function";
+    case 3: return "special";
+    case 4: return "local";
+  }
+}
+
+const vlist = VirtualList {
+  container: $(vlist),
+  renderItemView: : index, record, itemElement {
+    itemElement.idx = index;
+    itemElement.@#title = record.raw;
+    if ("selected" in record && record.selected) {
+      itemElement.state.checked = true;
+    } else {
+      itemElement.state.checked = false;
+    }
+    const key = itemElement.$([name='key']);
+    const type = itemElement.$([name='type']);
+    const original = itemElement.$([name='original']);
+    const offset = itemElement.$([name='offset']);
+    key.html = record.key.htmlEscape().replace(/[{}]/g, :s:s == '{' ? '<b>' : '</b>');
+    type.@#data = getSymbolType(record.type);
+    original.@#data = record.original == 1 ? "windows" : "linux";
+    offset.@#data = record.offset.toString(16);
+  }
+};
+
+function reload() {
+  const start = System.ticks;
+  @asyncSql db query self.parent.data | rs, err {
+    try {
+      if (err) throw err;
+      if (SQLite.isRecordset(rs)) {
+        vlist.value = SQLite.rowsAsObjectArray(rs);
+        $(#error-output).text = "";
+        $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
+      } else {
+        if (rs[0] == 101) {
+          throw new Error("Empty result");
+        }
+        throw new Error(SQLite.errstr(rs[0]));
+      }
+    } catch (e) {
+      $(#error-output).text = e.toString();
+    }
+  };
+}
+
+function self.ready() {
+  reload();
+}
+
+/*
+event click $(.search-result > .item) {
+  vlist.value[this.idx].selected = !vlist.value[this.idx].selected;
+}
+*/
+
+event dblclick $(.search-result > .item) {
+  if (this.data.type == 3 && this.data.original == 2) {
+    const plain = this.data.key.replace(/[{}]/g, '');
+    const tyname = plain ~/ "::$vtable";
+    if (tyname != plain) {
+      DataModel.addTab {
+        title: String.$(vtable {tyname}),
+        persistent: false,
+        content: self.url("vtable.html"),
+        data: {
+          name: tyname,
+          offset: this.data.offset
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+</script>
+<toolbar>
+  <group(type)>
+    <option(unknown) value="0" checked />
+    <option(variable) value="1" checked />
+    <option(function) value="2" checked />
+    <option(special) value="3" checked />
+    <option(local) value="4" checked />
+  </group>
+  <group(original)>
+    <option(windows) value="1" checked />
+    <option(linux) value="2" checked />
+  </group>
+  <group(order)>
+    <option(rank) value="" />
+  </group>
+  <div.fakeoption>reload</div>
+  <div.pad />
+  <div#stat />
+</toolbar>
+<output|text #error-output />
+<vlist.search-result>
+  <li.item>
+    <output|text (key) />
+    <div.bottom>
+      <output|text (type) />
+      <output|text (original) />
+      <output|text (offset) />
+    </div>
+  </li>
+</vlist>
