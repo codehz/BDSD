@@ -35,16 +35,23 @@ function self.ready() {
 event click $(#open) {
   const file = winext.openFile("Project File(*.bds-dump)|*.bds-dump|All files(*.*)|*.*", "Linux bedrock_server", view.root);
   if (!file) return;
-  winext.create(self.url("browser.html"), {
-    done: || view.windowState = View.WINDOW_SHOWN,
-    file: file,
-  });
+  view.window {
+    type: View.FRAME_WINDOW,
+    url: self.url("browser.html"),
+    parameters: file
+  } << event closing {
+    view.windowState = View.WINDOW_SHOWN;
+  };
   view.windowState = View.WINDOW_HIDDEN;
 }
 
 event click $(#create) {
-  stdout.$n(in)
-  winext.create(self.url("wizard.html"), || view.windowState = View.WINDOW_SHOWN);
+  view.window {
+    type: View.FRAME_WINDOW,
+    url: self.url("wizard.html")
+  } << event closing {
+    view.windowState = View.WINDOW_SHOWN;
+  };
   view.windowState = View.WINDOW_HIDDEN;
 }
 

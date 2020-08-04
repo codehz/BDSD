@@ -31,7 +31,7 @@ div:hover:not(:disabled) {
 </style>
 <script type="text/tiscript">
 
-const params = view.menu.value;
+const params = view.parameters;
 
 function min(a, b) {
   return a < b ? a : b;
@@ -68,7 +68,7 @@ function self.ready() {
   var my = y2 - vh;
   view.move(min(cx, mx), min(cy, my), vw, vh, true);
   view.windowTopmost = true;
-  view.menu.show();
+  winext.blur(view.root);
 }
 event click {
   view.close();

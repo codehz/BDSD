@@ -1,7 +1,11 @@
 namespace UX {
   namespace details {
     function showMenu(parameters) {
-      winext.menu(view.root.url("menu.html"), parameters);
+      view.window {
+        type: View.FRAME_WINDOW,
+        url: view.root.url("menu.html"),
+        parameters: parameters
+      };
     }
 
     function createCommand(target, name, title) {

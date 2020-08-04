@@ -25,7 +25,7 @@ function self.ready() {
   var tx = x + (w - sw) / 2;
   var ty = y + (h - sh) / 2;
   view.move(tx, ty, sw, sh, true);
-  view.context.show();
+  winext.blur(view.root);
 }
 
 namespace MainData {

@@ -185,10 +185,10 @@ function self.ready() {
   var tx = x + (w - sw) / 2;
   var ty = y + (h - sh) / 2;
   view.move(tx, ty, sw, sh, true);
-  view.context.show();
+  winext.blur(view.root);
 
   try {
-    db = SQLite.open(view.context.value.file);
+    db = SQLite.open(view.parameters);
   } catch (e) {
     view.msgbox(#error, "Failed to open database");
     view.close();
