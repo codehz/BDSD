@@ -87,7 +87,7 @@ const vlist = VirtualList {
     vlel.value = record.full || record.value || "(pure virtual)";
     vtyp.@#data = record.full ? 'windows' : record.value ? 'linux' : 'none';
     voff.@#data = record.offset || '';
-    vfix.state.disabled = !!record.full || record.prefix.match(/\$destructor$/);
+    vfix.state.disabled = !!record.full || (record.prefix && record.prefix.match(/\$destructor$/));
   }
 }
 
@@ -104,6 +104,38 @@ function simplify(str) {
       :a,x:String.$(std::unique_ptr<{x}>));
 }
 
+function prefixmatch(item, start) {
+  const arg = String.$(^"{item.prefix}");
+  @asyncSql db getPdbSymbol arg | rs, err {
+    if (SQLite.isRecordset(rs)) {
+      const obj = SQLite.rowAsObject(rs);
+      if (!rs.next()) {
+        item.full = obj.key;
+        bedrock.demangleVtableFunction(obj.raw, :x:item.decoded = x);
+        item.raw = obj.raw;
+        item.offset = obj.offset;
+      }
+    }
+    $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
+  };
+}
+
+function fullmatch(item, start) {
+  const arg = String.$(^"{item.value.substr(0, item.value.length - 10)}");
+  @asyncSql db getPdbSymbol arg | rs, err {
+    if (SQLite.isRecordset(rs)) {
+      const obj = SQLite.rowAsObject(rs);
+      item.full = obj.key;
+      bedrock.demangleVtableFunction(obj.raw, :x:item.decoded = x);
+      item.raw = obj.raw;
+      item.offset = obj.offset;
+    } else {
+      prefixmatch(item, start);
+    }
+    $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
+  };
+}
+
 function self.ready() {
   const start = System.ticks;
   @asyncSql db query self.parent.data.offset | rs, err {
@@ -115,17 +147,8 @@ function self.ready() {
         $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
         for (var item in vlist.value) {
           if (item.prefix && !item.prefix.match(/\$destructor$/)) {
-            const arg = String.$(^"{item.prefix}");
-            const citm = item;
-            @asyncSql db getPdbSymbol arg | rs, err {
-              if (SQLite.isRecordset(rs)) {
-                citm.full = rs[0];
-                bedrock.demangleVtableFunction(rs[1], :x:citm.decoded = x);
-                citm.raw = rs[1];
-                citm.offset = rs[2];
-              }
-              $(#stat).text = String.$({vlist.value.length} results ({System.ticks - start} ms));
-            };
+            // const arg = String.$(^"{item.prefix}");
+            fullmatch(item, start);
           }
         }
       } else {
@@ -147,7 +170,7 @@ event click $(action[name="export"]) {
   var skipped_nopdb = 0;
   var skipped_pure = 0;
   for (var item in vlist.value) {
-    if (item.prefix.match(/\$destructor$/)) {
+    if (item.prefix && item.prefix.match(/\$destructor$/)) {
       if (!destructor) { // skip the seconds destructor
         line += String.$(virtual ~{self.parent.data.name}();) + "\n";
         destructor = true;
