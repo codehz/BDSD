@@ -52,6 +52,10 @@ public:
     ULONG celt = 0;
     psym       = 0;
     hr         = byaddr->Next(1, &psym, &celt);
+    DWORD Tag  = 0;
+    psym->get_symTag(&Tag);
+    if(celt && Tag == 10) //SymTagPublicSymbol
+      return Next();
     return celt;
   }
 };
